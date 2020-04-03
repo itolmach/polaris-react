@@ -22,15 +22,19 @@ export function buildCustomProperties(
   newDesignLanguage: boolean,
   tokens?: Record<string, string>,
 ): CustomPropertiesLike {
-  const {colors = {}, colorScheme, config} = themeConfig;
+  const {colors = {}, colorScheme, config, frameOffset = 0} = themeConfig;
   const mergedConfig = mergeConfigs(base, config || {});
 
   return newDesignLanguage
     ? customPropertyTransformer({
         ...colorFactory(colors, colorScheme, mergedConfig),
         ...tokens,
+        frameOffset: `${frameOffset}px`,
       })
-    : buildLegacyColors(themeConfig);
+    : {
+        ...buildLegacyColors(themeConfig),
+        ...customPropertyTransformer({frameOffset: `${frameOffset}px`}),
+      };
 }
 
 export function buildThemeContext(
@@ -118,6 +122,16 @@ export function setTextColor(
   return [name, tokens.colorWhite];
 }
 
+export function setBorderColor(
+  name: string,
+  variant: 'light' | 'dark' = 'dark',
+): string[] {
+  if (variant === 'light') {
+    return [name, tokens.colorInkLighter];
+  }
+  return [name, tokens.colorSkyDark];
+}
+
 export function setTheme(
   color: string | HSLColor,
   baseName: string,
@@ -131,6 +145,10 @@ export function setTheme(
         setTextColor(constructColorName(baseName, null, 'color'), 'light'),
       );
 
+      colorPairs.push(
+        setBorderColor(constructColorName(baseName, null, 'border'), 'light'),
+      );
+
       colorPairs.push([
         constructColorName(baseName, key, 'lighter'),
         lightenToString(color, 7, -10),
@@ -140,6 +158,10 @@ export function setTheme(
     case 'dark':
       colorPairs.push(
         setTextColor(constructColorName(baseName, null, 'color'), 'dark'),
+      );
+
+      colorPairs.push(
+        setBorderColor(constructColorName(baseName, null, 'border'), 'dark'),
       );
 
       colorPairs.push([
